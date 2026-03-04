@@ -1,0 +1,52 @@
+---
+# =============================================================================
+# Proxmoxi virtuaalmasina kloonimise käsiraamat
+# =========================================================================
+# Autor: Valdo Nõlvak
+# Kaasautor: Joosep Alasoo
+# Kuupäev: 20.12.2020
+# Ümberkujundatud: 2024 (Ansible)
+#
+# Kirjeldus:
+# Kloonib iga õpilase jaoks Proxmoxi virtuaalmasina malli CSV-fail,
+# määrab selle SDN-sillavõrgule ja annab PVEAdmini õigused
+# õpilase kasutajakontole.
+
+# Kasutamine:
+# ansible-playbook clone_vms.yml -i inventory/hosts.yml \
+# --extra-vars "csv_file=students.csv"
+## CSV-vorming (ilma päisereata):
+# eesnimi,perekonnanimi,kasutajanimi
+# Jaan,Tamm,jtamm
+# ========================================================================================
+
+- name: kloonib vmid opilaste gruppi jaoks
+  hosts: proxmox
+  gather_facts: false
+
+  vars_files:
+    - group_vars/proxmox.yml
+
+  tasks:
+
+    - name: loe opilaste CSV faili
+      community.general.read_csv:
+        path: "{{ csv_file }}"
+        fieldnames:
+          - firstname
+          - lastname
+          - username
+      register: students
+      delegate_to: localhost
+
+    - name: Klooni VM, konfigureeri vork ja anna oigused
+      include_role:
+        name: proxmox_clone
+      vars:
+        student: "{{ item }}"
+        vm_id: "{{ (base_vm_id | int) + (student_index | int) }}"
+        vlan_id: "{{ (base_vlan | int) + (student_index | int) }}"
+      loop: "{{ students.list }}"
+      loop_control:
+        index_var: student_index
+        label: "{{ item.firstname }}{{ item.lastname }}"

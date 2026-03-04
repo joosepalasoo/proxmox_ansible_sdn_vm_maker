@@ -1,0 +1,38 @@
+---
+# =============================================================================
+# Ülesanded — proxmox_clone roll
+# Kloonib virtuaalmasina, määrab SDN-võrgu ja annab õpilastele õigused.
+# ============================================================================================
+
+- name: "Clone template {{ template_vm_id }} → VM {{ vm_id }} ({{ student.firstname }}{{ student.lastname }})"
+  command: >
+    qm clone {{ template_vm_id }} {{ vm_id }}
+    --name {{ lab_label }}-Server-{{ group_label }}-{{ student.firstname }}{{ student.lastname }}
+  register: clone_result
+  changed_when: clone_result.rc == 0
+  failed_when: clone_result.rc != 0
+
+- name: "Set SDN network bridge vnet{{ vlan_id }} on VM {{ vm_id }}"
+  command: >
+    qm set {{ vm_id }}
+    --net0 "{{ nic_type }},bridge=vnet{{ vlan_id }},firewall={{ firewall_enabled | int }}"
+  register: net_result
+  changed_when: net_result.rc == 0
+  failed_when: net_result.rc != 0
+
+- name: "Grant PVEAdmin to {{ student.username }}@{{ user_domain }} on VM {{ vm_id }}"
+  command: >
+    pveum aclmod /vms/{{ vm_id }}
+    -user {{ student.username }}@{{ user_domain }}
+    -role {{ proxmox_role }}
+  register: acl_result
+  changed_when: acl_result.rc == 0
+  failed_when: acl_result.rc != 0
+
+- name: "Log result for {{ student.firstname }}{{ student.lastname }}"
+  debug:
+    msg: >
+      VM {{ vm_id }} created:
+      name={{ lab_label }}-Server-{{ group_label }}-{{ student.firstname }}{{ student.lastname }},
+      network=vnet{{ vlan_id }},
+      user={{ student.username }}@{{ user_domain }}

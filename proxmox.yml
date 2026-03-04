@@ -1,0 +1,22 @@
+---
+# ==============================================================================
+# gruppi muutujad — Proxmoxi hostid
+# Redigeeri neid enne mängukava käivitamist oma keskkonnaga sobivaks.
+# ==============================================================================
+
+# ---- VMi kloonimine ----
+template_vm_id: 121       # vm template id
+base_vm_id: 100           # vm id mida seadistada opilastele
+base_vlan: 20             # esimene SDN Vneti vlan number
+
+# ---- nimetamine ----
+lab_label: "Win"          # vmi nimi (Deb-Server-kursus-õpilasenimi)
+group_label: "IT23"       # õpilase kursuse lühend
+
+# ---- proxmoxi authentimine ----
+user_domain: "hkhk.edu.ee"   # Proxmox auth realmi seadistamine 
+proxmox_role: "PVEAdmin"     # rollide andmine (muutmine vastavalt)
+
+# ---- Networking ----
+nic_type: "virtio"        # NIC
+firewall_enabled: true    # PVE tulemüür
